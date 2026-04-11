@@ -1,0 +1,159 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Dashboard</h2>
+    <p>Overview of your security scanner database</p>
+</div>
+
+<!-- display cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h3 style="font-size: 16px; opacity: 0.9; margin-bottom: 10px;">Suspicious TLDs</h3>
+        <div style="font-size: 48px; font-weight: bold;">{{ stats.tlds }}</div>
+        <a href="{{ url_for('admin.tlds_list') }}" style="color: white; font-size: 14px; text-decoration: underline; margin-top: 10px; display: inline-block;">View All →</a>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+        <h3 style="font-size: 16px; opacity: 0.9; margin-bottom: 10px;">Protected Brands</h3>
+        <div style="font-size: 48px; font-weight: bold;">{{ stats.brands }}</div>
+        <a href="{{ url_for('admin.brands_list') }}" style="color: white; font-size: 14px; text-decoration: underline; margin-top: 10px; display: inline-block;">View All →</a>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+        <h3 style="font-size: 16px; opacity: 0.9; margin-bottom: 10px;">Blacklisted Domains</h3>
+        <div style="font-size: 48px; font-weight: bold;">{{ stats.blacklist }}</div>
+        <a href="{{ url_for('admin.blacklist_list') }}" style="color: white; font-size: 14px; text-decoration: underline; margin-top: 10px; display: inline-block;">View All →</a>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white;">
+        <h3 style="font-size: 16px; opacity: 0.9; margin-bottom: 10px;">Suspicious Keywords</h3>
+        <div style="font-size: 48px; font-weight: bold;">{{ stats.keywords }}</div>
+        <a href="{{ url_for('admin.keywords_list') }}" style="color: white; font-size: 14px; text-decoration: underline; margin-top: 10px; display: inline-block;">View All →</a>
+    </div>
+</div>
+
+<!-- Risk Level Breakdown -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+    <div class="card">
+        <div class="card-header">
+            <h3>TLD Risk Levels</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🔴 Critical</span>
+                <span class="badge badge-critical">{{ tld_risks.critical }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🟠 High</span>
+                <span class="badge badge-high">{{ tld_risks.high }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🟡 Medium</span>
+                <span class="badge badge-medium">{{ tld_risks.medium }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🔵 Low</span>
+                <span class="badge badge-low">{{ tld_risks.low }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Keyword Risk Levels</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🟠 High</span>
+                <span class="badge badge-high">{{ keyword_risks.high }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🟡 Medium</span>
+                <span class="badge badge-medium">{{ keyword_risks.medium }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🔵 Low</span>
+                <span class="badge badge-low">{{ keyword_risks.low }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Additions -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="card">
+        <div class="card-header">
+            <h3>Recently Added TLDs</h3>
+        </div>
+        {% if recent_tlds %}
+        <table>
+            <thead>
+                <tr>
+                    <th>TLD</th>
+                    <th>Risk</th>
+                    <th>Added By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tld in recent_tlds %}
+                <tr>
+                    <td>.{{ tld.tld }}</td>
+                    <td>
+                        <span class="badge badge-{{ tld.risk_level }}">{{ tld.risk_level }}</span>
+                    </td>
+                    <td>{{ tld.added_by }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 20px;">No TLDs added yet</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Recently Added Brands</h3>
+        </div>
+        {% if recent_brands %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Brand</th>
+                    <th>Category</th>
+                    <th>Added By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for brand in recent_brands %}
+                <tr>
+                    <td>{{ brand.brand_name }}</td>
+                    <td>{{ brand.category }}</td>
+                    <td>{{ brand.added_by }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 20px;">No brands added yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mt-20">
+    <div class="card-header">
+        <h3>Quick Actions</h3>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.tlds_add') }}" class="btn btn-primary">➕ Add TLD</a>
+        <a href="{{ url_for('admin.brands_add') }}" class="btn btn-primary">➕ Add Brand</a>
+        <a href="{{ url_for('admin.blacklist_add') }}" class="btn btn-primary">➕ Add to Blacklist</a>
+        <a href="{{ url_for('admin.keywords_add') }}" class="btn btn-primary">➕ Add Keyword</a>
+        <a href="{{ url_for('admin.export_data') }}" class="btn btn-secondary">📤 Export Data</a>
+    </div>
+</div>
+{% endblock %}

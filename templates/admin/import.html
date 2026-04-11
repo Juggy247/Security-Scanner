@@ -1,0 +1,349 @@
+{% extends "admin/base.html" %}
+{% block title %}Import Data{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .validation-box {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        display: none;
+    }
+    
+    .validation-box.show {
+        display: block;
+    }
+    
+    .validation-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .validation-item {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        border-left: 4px solid #667eea;
+    }
+    
+    .validation-item.has-duplicates {
+        border-left-color: #ffc107;
+    }
+    
+    .validation-item.has-errors {
+        border-left-color: #dc3545;
+    }
+    
+    .validation-item h4 {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    .validation-item .count {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .validation-item .status {
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    
+    .status.success { color: #28a745; }
+    .status.warning { color: #ffc107; }
+    .status.error { color: #dc3545; }
+    
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .file-input-wrapper input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
+    
+    .file-input-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .file-input-label:hover {
+        background: #e9ecef;
+        border-color: #667eea;
+    }
+    
+    .file-input-label.has-file {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+    
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📥 Import Data</h2>
+    <p>Import security data from JSON file with duplicate detection</p>
+</div>
+
+<div class="card" style="max-width: 800px;">
+    <form id="importForm" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Select JSON File *</label>
+            <div class="file-input-wrapper">
+                <input type="file" 
+                       id="fileInput" 
+                       name="file" 
+                       accept=".json" 
+                       required
+                       onchange="handleFileSelect(this)">
+                <label for="fileInput" class="file-input-label" id="fileLabel">
+                    <div style="text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📄</div>
+                        <div style="font-weight: 500;">Click to select JSON file</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">or drag and drop</div>
+                    </div>
+                </label>
+            </div>
+            <div id="fileName" style="margin-top: 10px; color: #666; font-size: 14px;"></div>
+        </div>
+
+        <div id="validationBox" class="validation-box">
+            <h4 style="margin-bottom: 15px; display: flex; align-items: center;">
+                <span>📊 Validation Results</span>
+                <span id="validationSpinner" class="spinner" style="display: none;"></span>
+            </h4>
+            
+            <div id="validationContent">
+                <div class="validation-summary" id="validationSummary"></div>
+                <div id="validationErrors" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="button" 
+                    id="validateBtn" 
+                    class="btn btn-secondary"
+                    onclick="validateFile()"
+                    disabled>
+                🔍 Validate File
+            </button>
+            <button type="submit" 
+                    id="importBtn" 
+                    class="btn btn-success"
+                    disabled>
+                📥 Import Data
+            </button>
+            <a href="{{ url_for('admin.import_data') }}" class="btn btn-secondary">← Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="max-width: 800px; margin-top: 20px; background: #f8f9fa;">
+    <h4 style="margin-bottom: 15px;">Example Json Format</h4>
+    <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px;">
+  "tlds": [
+    {
+      "tld": "tk",
+      "risk_level": "high",
+      "reason": "Common phishing TLD",
+      "added_by": "admin"
+    }</pre>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedFile = null;
+
+function handleFileSelect(input) {
+    const fileLabel = document.getElementById('fileLabel');
+    const fileName = document.getElementById('fileName');
+    const validateBtn = document.getElementById('validateBtn');
+    const importBtn = document.getElementById('importBtn');
+    const validationBox = document.getElementById('validationBox');
+    
+    if (input.files && input.files[0]) {
+        selectedFile = input.files[0];
+        
+        // Update UI
+        fileLabel.classList.add('has-file');
+        fileLabel.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                <div style="font-weight: 500; color: #28a745;">File Selected</div>
+            </div>
+        `;
+        
+        fileName.innerHTML = `📄 <strong>${selectedFile.name}</strong> (${formatFileSize(selectedFile.size)})`;
+        
+        // Enable buttons
+        validateBtn.disabled = false;
+        importBtn.disabled = false;
+        
+        // Hide previous validation
+        validationBox.classList.remove('show');
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function validateFile() {
+    const validationBox = document.getElementById('validationBox');
+    const validationSpinner = document.getElementById('validationSpinner');
+    const validationSummary = document.getElementById('validationSummary');
+    const validationErrors = document.getElementById('validationErrors');
+    const validateBtn = document.getElementById('validateBtn');
+    
+    if (!selectedFile) {
+        alert('Please select a file first');
+        return;
+    }
+    
+    // Show validation box and spinner
+    validationBox.classList.add('show');
+    validationSpinner.style.display = 'inline-block';
+    validateBtn.disabled = true;
+    validationSummary.innerHTML = '<p style="text-align: center; color: #666;">Validating file...</p>';
+    validationErrors.innerHTML = '';
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    // Send validation request
+    fetch('{{ url_for("admin.validate_import") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        validationSpinner.style.display = 'none';
+        validateBtn.disabled = false;
+        
+        if (!data.valid) {
+            validationSummary.innerHTML = `
+                <div class="validation-item has-errors">
+                    <h4>Error</h4>
+                    <div class="count">❌</div>
+                    <div class="status error">${data.error}</div>
+                </div>
+            `;
+            return;
+        }
+        
+        
+        let summaryHTML = '';
+        
+        for (const [key, stats] of Object.entries(data.summary)) {
+            const hasIssues = stats.duplicates > 0 || stats.invalid > 0;
+            const itemClass = stats.invalid > 0 ? 'has-errors' : (stats.duplicates > 0 ? 'has-duplicates' : '');
+            const newItems = stats.total - stats.duplicates - stats.invalid;
+            
+            summaryHTML += `
+                <div class="validation-item ${itemClass}">
+                    <h4>${key.toUpperCase()}</h4>
+                    <div class="count">${newItems}</div>
+                    <div class="status ${newItems > 0 ? 'success' : 'warning'}">
+                        ${newItems} new
+                        ${stats.duplicates > 0 ? `<br>${stats.duplicates} duplicates` : ''}
+                        ${stats.invalid > 0 ? `<br>${stats.invalid} invalid` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        validationSummary.innerHTML = summaryHTML;
+        
+        // Display errors if any
+        if (data.errors && data.errors.length > 0) {
+            validationErrors.innerHTML = `
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 15px;">
+                    <strong>⚠️ Validation Warnings:</strong>
+                    <ul style="margin: 10px 0 0 20px;">
+                        ${data.errors.slice(0, 10).map(err => `<li>${err}</li>`).join('')}
+                        ${data.errors.length > 10 ? `<li><em>... and ${data.errors.length - 10} more</em></li>` : ''}
+                    </ul>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        validationSpinner.style.display = 'none';
+        validateBtn.disabled = false;
+        validationSummary.innerHTML = `
+            <div class="validation-item has-errors">
+                <h4>Error</h4>
+                <div class="count">❌</div>
+                <div class="status error">Validation failed: ${error.message}</div>
+            </div>
+        `;
+    });
+}
+
+
+const fileLabel = document.getElementById('fileLabel');
+const fileInput = document.getElementById('fileInput');
+
+fileLabel.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileLabel.style.borderColor = '#667eea';
+    fileLabel.style.background = '#e9ecef';
+});
+
+fileLabel.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    fileLabel.style.borderColor = '#dee2e6';
+    fileLabel.style.background = '#f8f9fa';
+});
+
+fileLabel.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileLabel.style.borderColor = '#dee2e6';
+    fileLabel.style.background = '#f8f9fa';
+    
+    if (e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect(fileInput);
+    }
+});
+</script>
+{% endblock %}

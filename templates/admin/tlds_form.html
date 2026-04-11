@@ -1,0 +1,85 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ action }} TLD{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ action }} Suspicious TLD</h2>
+    <p>{% if action == 'Add' %}Add a new suspicious TLD to the database{% else %}Update TLD information{% endif %}</p>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <form method="POST">
+        <div class="form-group">
+            <label for="tld">TLD *</label>
+            <input type="text" 
+                   id="tld" 
+                   name="tld" 
+                   class="form-control" 
+                   placeholder="tk, xyz, top"
+                   {% if tld %}value="{{ tld.tld }}" disabled{% endif %}
+                   {% if action == 'Add' %}required{% endif %}>
+            <small style="color: #666; font-size: 12px;">Enter without the dot (e.g., "tk" not ".tk")</small>
+        </div>
+
+        <div class="form-group">
+            <label for="risk_level">Risk Level *</label>
+            <select id="risk_level" name="risk_level" class="form-control" required>
+                <option value="low" {% if tld and tld.risk_level == 'low' %}selected{% endif %}>🔵 Low</option>
+                <option value="medium" {% if tld and tld.risk_level == 'medium' or not tld %}selected{% endif %}>🟡 Medium</option>
+                <option value="high" {% if tld and tld.risk_level == 'high' %}selected{% endif %}>🟠 High</option>
+                <option value="critical" {% if tld and tld.risk_level == 'critical' %}selected{% endif %}>🔴 Critical</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="reason">Reason</label>
+            <textarea id="reason" 
+                      name="reason" 
+                      class="form-control" 
+                      placeholder="Why is this TLD suspicious? (e.g., commonly used in phishing)">{% if tld %}{{ tld.reason }}{% endif %}</textarea>
+        </div>
+
+        {% if action == 'Add' %}
+        <div class="form-group">
+            <label for="added_by">Added By</label>
+            <input type="text" 
+                   id="added_by" 
+                   name="added_by" 
+                   class="form-control" 
+                   value="admin" 
+                   placeholder="Your username">
+        </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="submit" class="btn btn-primary">
+                {% if action == 'Add' %}➕ Add TLD{% else %}💾 Save Changes{% endif %}
+            </button>
+            <a href="{{ url_for('admin.tlds_list') }}" class="btn btn-secondary">
+                ← Back to List
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Example TLDs -->
+{% if action == 'Add' %}
+<div class="card" style="max-width: 600px; margin-top: 20px; background: #f8f9fa;">
+    <h4 style="margin-bottom: 15px;">💡 Common Suspicious TLDs</h4>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.tk</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.xyz</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.top</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.gq</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.ml</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.ga</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.cf</span>
+        <span style="padding: 5px 10px; background: white; border-radius: 4px; font-size: 13px;">.pw</span>
+    </div>
+    <p style="margin-top: 15px; font-size: 13px; color: #666;">
+        These TLDs are frequently used in phishing campaigns due to low cost and minimal registration requirements.
+    </p>
+</div>
+{% endif %}
+{% endblock %}

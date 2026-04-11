@@ -1,0 +1,108 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Suspicious TLDs{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between align-center">
+    <div>
+        <h2>🌐 Suspicious TLDs</h2>
+        <p>Manage top-level domains commonly used in phishing</p>
+    </div>
+    <a href="{{ url_for('admin.tlds_add') }}" class="btn btn-primary">➕ Add New TLD</a>
+</div>
+
+<div class="card">
+    <div class="card-header flex justify-between align-center">
+        <h3>All TLDs ({{ tlds|length }})</h3>
+        <div>
+            <a href="{{ url_for('admin.tlds_list', inactive='false') }}" 
+               class="btn btn-sm {% if not include_inactive %}btn-primary{% else %}btn-secondary{% endif %}">
+                Active Only
+            </a>
+            <a href="{{ url_for('admin.tlds_list', inactive='true') }}" 
+               class="btn btn-sm {% if include_inactive %}btn-primary{% else %}btn-secondary{% endif %}">
+                Include Inactive
+            </a>
+        </div>
+    </div>
+
+    {% if tlds %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>TLD</th>
+                    <th>Risk Level</th>
+                    <th>Reason</th>
+                    <th>Added By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tld in tlds %}
+                <tr>
+                    <td><strong>.{{ tld.tld }}</strong></td>
+                    <td>
+                        <span class="badge badge-{{ tld.risk_level }}">
+                            {{ tld.risk_level }}
+                        </span>
+                    </td>
+                    <td>
+                        {{ tld.reason[:50] }}{% if tld.reason|length > 50 %}...{% endif %}
+                    </td>
+                    <td>{{ tld.added_by }}</td>
+                    <td>
+                        {% if tld.is_active %}
+                            <span style="color: #28a745;">✓ Active</span>
+                        {% else %}
+                            <span style="color: #dc3545;">✗ Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 5px;">
+                            <a href="{{ url_for('admin.tlds_edit', tld=tld.tld) }}" 
+                               class="btn btn-sm btn-secondary">
+                                ✏️ Edit
+                            </a>
+                            
+                            {% if tld.is_active %}
+                            <form method="POST" 
+                                  action="{{ url_for('admin.tlds_deactivate', tld=tld.tld) }}" 
+                                  style="display: inline;">
+                                <button type="submit" 
+                                        class="btn btn-sm btn-warning"
+                                        onclick="return confirmDelete('Deactivate this TLD?')">
+                                    ⏸️ Deactivate
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <form method="POST" 
+                                  action="{{ url_for('admin.tlds_delete', tld=tld.tld) }}" 
+                                  style="display: inline;">
+                                <button type="submit" 
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirmDelete('Permanently delete .{{ tld.tld }}?')">
+                                    🗑️ Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin-bottom: 20px;">🌐</p>
+        <p style="font-size: 18px; margin-bottom: 10px;">No TLDs found</p>
+        <p style="font-size: 14px;">Get started by adding your first suspicious TLD</p>
+        <a href="{{ url_for('admin.tlds_add') }}" class="btn btn-primary" style="margin-top: 20px;">
+            ➕ Add TLD
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

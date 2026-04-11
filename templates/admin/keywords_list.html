@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+{% block title %}Suspicious Keywords{% endblock %}
+{% block content %}
+<div class="page-header flex justify-between align-center">
+    <div>
+        <h2>🔑 Suspicious Keywords</h2>
+        <p>Keywords commonly found in phishing URLs</p>
+    </div>
+    <a href="{{ url_for('admin.keywords_add') }}" class="btn btn-primary">➕ Add Keyword</a>
+</div>
+
+<div class="card">
+    <div class="card-header flex justify-between align-center">
+        <h3>All Keywords ({{ keywords|length }})</h3>
+        {% if categories %}
+            <select id="categoryFilter" class="form-control" style="width: auto;">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+
+            <script>
+            document.getElementById('categoryFilter').addEventListener('change', function() {
+                if (this.value) {
+                    window.location.href = "{{ url_for('admin.keywords_list') }}?category=" + encodeURIComponent(this.value);
+                } else {
+                    // Reset back to show all keywords if "All Categories" is chosen
+                    window.location.href = "{{ url_for('admin.keywords_list') }}";
+                }
+            });
+            </script>
+            {% endif %}
+
+    </div>
+
+    {% if keywords %}
+    <table>
+        <thead>
+            <tr>
+                <th>Keyword</th>
+                <th>Category</th>
+                <th>Risk Level</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for kw in keywords %}
+            <tr>
+                <td><strong>{{ kw.keyword }}</strong></td>
+                <td>{{ kw.category }}</td>
+                <td><span class="badge badge-{{ kw.risk_level }}">{{ kw.risk_level }}</span></td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.keywords_delete', keyword=kw.keyword) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" 
+                                onclick="return confirmDelete('Delete {{ kw.keyword }}?')">
+                            🗑️ Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 40px;">
+        <p style="font-size: 48px;">🔑</p>
+        <p>No keywords found</p>
+        {% if selected_category %}
+        <p style="color: #666; margin: 10px 0;">No keywords in the "{{ selected_category }}" category</p>
+        <a href="{{ url_for('admin.keywords_list') }}" class="btn btn-secondary mt-20">← Show All Keywords</a>
+        {% else %}
+        <a href="{{ url_for('admin.keywords_add') }}" class="btn btn-primary mt-20">➕ Add Keyword</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

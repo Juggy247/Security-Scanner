@@ -1,0 +1,67 @@
+{% extends "admin/base.html" %}
+{% block title %}Blacklist{% endblock %}
+{% block content %}
+<div class="page-header flex justify-between align-center">
+    <div>
+        <h2>🚫 Blacklisted Domains</h2>
+        <p>Known malicious or phishing domains</p>
+    </div>
+    <a href="{{ url_for('admin.blacklist_add') }}" class="btn btn-primary">➕ Add to Blacklist</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="GET" class="flex gap-10">
+            <input type="text" name="search" class="form-control" 
+                   placeholder="Search domains..." value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary">🔍 Search</button>
+            {% if search_query %}
+            <a href="{{ url_for('admin.blacklist_list') }}" class="btn btn-secondary">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if domains %}
+    <table>
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th>Source</th>
+                <th>Reason</th>
+                <th>Added By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in domains %}
+            <tr>
+                <td><strong>{{ domain.domain }}</strong></td>
+                <td>{{ domain.source }}</td>
+                <td>{{ domain.reason[:40] }}{% if domain.reason|length > 40 %}...{% endif %}</td>
+                <td>{{ domain.added_by }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.blacklist_delete', domain=domain.domain) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" 
+                                onclick="return confirmDelete('Remove {{ domain.domain }}?')">
+                            🗑️ Remove
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="padding: 15px; text-align: center; border-top: 1px solid #dee2e6;">
+        Showing {{ domains|length }} of {{ total }} domains
+        {% if total_pages > 1 %}
+        | Page {{ page }} of {{ total_pages }}
+        {% endif %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px;">
+        <p style="font-size: 48px;">🚫</p>
+        <p>No domains found</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

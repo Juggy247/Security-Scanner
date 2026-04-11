@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ action }} Keyword{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ action }} Suspicious Keyword</h2>
+</div>
+<div class="card" style="max-width: 600px;">
+    <form method="POST">
+        <div class="form-group">
+            <label>Keyword *</label>
+            <input type="text" name="keyword" class="form-control" 
+                   placeholder="login, verify, secure" required>
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category" class="form-control">
+                <option value="action_words">Action Words</option>
+                <option value="urgency">Urgency</option>
+                <option value="security">Security</option>
+                <option value="financial">Financial</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Risk Level</label>
+            <select name="risk_level" class="form-control">
+                <option value="low">🔵 Low</option>
+                <option value="medium" selected>🟡 Medium</option>
+                <option value="high">🟠 High</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">➕ Add Keyword</button>
+        <a href="{{ url_for('admin.keywords_list') }}" class="btn btn-secondary">← Back</a>
+    </form>
+</div>
+{% endblock %}

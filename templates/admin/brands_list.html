@@ -1,0 +1,73 @@
+{% extends "admin/base.html" %}
+{% block title %}Protected Brands{% endblock %}
+{% block content %}
+<div class="page-header flex justify-between align-center">
+    <div>
+        <h2>🏢 Protected Brands</h2>
+        <p>Manage brands to detect impersonation attempts</p>
+    </div>
+    <a href="{{ url_for('admin.brands_add') }}" class="btn btn-primary">➕ Add New Brand</a>
+</div>
+
+<div class="card">
+    <div class="card-header flex justify-between align-center">
+        <h3>All Brands ({{ brands|length }})</h3>
+        {% if categories %}
+        <select id="categoryFilter" class="form-control" style="width: auto;">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+
+        <script>
+        document.getElementById('categoryFilter').addEventListener('change', function() {
+            window.location.href = "{{ url_for('admin.brands_list') }}?category=" + encodeURIComponent(this.value);
+        });
+        </script>
+
+        {% endif %}
+    </div>
+
+    {% if brands %}
+    <table>
+        <thead>
+            <tr>
+                <th>Brand Name</th>
+                <th>Category</th>
+                <th>Added By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for brand in brands %}
+            <tr>
+                <td><strong>{{ brand.brand_name }}</strong></td>
+                <td>{{ brand.category }}</td>
+                <td>{{ brand.added_by }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.brands_delete', brand_name=brand.brand_name) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" 
+                                onclick="return confirmDelete('Delete {{ brand.brand_name }}?')">
+                            🗑️ Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 40px;">
+        <p style="font-size: 48px;">🏢</p>
+        <p>No brands found</p>
+        {% if selected_category %}
+        <p style="color: #666; margin: 10px 0;">No brands in the "{{ selected_category }}" category</p>
+        <a href="{{ url_for('admin.brands_list') }}" class="btn btn-secondary mt-20">← Show All Brands</a>
+        {% else %}
+        <a href="{{ url_for('admin.brands_add') }}" class="btn btn-primary mt-20">➕ Add Brand</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

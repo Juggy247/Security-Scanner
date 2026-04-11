@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ action }} Brand{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ action }} Protected Brand</h2>
+</div>
+<div class="card" style="max-width: 600px;">
+    <form method="POST">
+        <div class="form-group">
+            <label>Brand Name *</label>
+            <input type="text" name="brand_name" class="form-control" 
+                   placeholder="paypal, amazon, google" required>
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category" class="form-control">
+                <option value="general">General</option>
+                <option value="financial">Financial</option>
+                <option value="technology">Technology</option>
+                <option value="ecommerce">E-commerce</option>
+                <option value="social_media">Social Media</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Added By</label>
+            <input type="text" name="added_by" class="form-control" value="admin">
+        </div>
+        <button type="submit" class="btn btn-primary">➕ Add Brand</button>
+        <a href="{{ url_for('admin.brands_list') }}" class="btn btn-secondary">← Back</a>
+    </form>
+</div>
+{% endblock %}

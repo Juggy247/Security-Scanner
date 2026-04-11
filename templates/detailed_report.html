@@ -1,0 +1,427 @@
+
+
+    <h3 style="margin-bottom: 20px; font-size: 24px; color: #333;">📊 Detailed Technical Analysis</h3>
+    
+   
+    <div class="section-block">
+        <div class="section-header">
+            🔒 Connection Security
+        </div>
+        
+        {% if scan_report.https %}
+        <div class="info-grid">
+            <div class="info-label">HTTPS Enforced:</div>
+            <div class="info-value">
+                {% if scan_report.https.https_enforced %}
+                <span class="status-pass">✓ Yes - Site uses HTTPS</span>
+                {% else %}
+                <span class="status-fail">✗ No - Site does not enforce HTTPS</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">HTTP to HTTPS Redirect:</div>
+            <div class="info-value">
+                {% if scan_report.https.redirected_to_https %}
+                <span class="status-pass">✓ Yes</span>
+                {% else %}
+                <span class="status-warning">⚠ No automatic redirect</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="divider"></div>
+        
+        {% if scan_report.ssl %}
+        <div class="info-grid">
+            <div class="info-label">SSL Certificate:</div>
+            <div class="info-value">
+                {% if scan_report.ssl.valid %}
+                <span class="status-pass">✓ Valid Certificate</span>
+                {% else %}
+                <span class="status-fail">✗ Invalid Certificate</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if scan_report.ssl.valid %}
+        <div class="info-grid">
+            <div class="info-label">Certificate Issuer:</div>
+            <div class="info-value">{{ scan_report.ssl.issuer }}</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Expires On:</div>
+            <div class="info-value">{{ scan_report.ssl.expires }}</div>
+        </div>
+        {% else %}
+        <div class="info-grid">
+            <div class="info-label">Error:</div>
+            <div class="info-value"><span class="status-fail">{{ scan_report.ssl.error }}</span></div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    
+    <div class="section-block">
+        <div class="section-header">
+            🛡️ Security Headers
+        </div>
+        
+        {% if scan_report.headers %}
+        <div class="info-grid">
+            <div class="info-label">Present Headers:</div>
+            <div class="info-value">
+                {% if scan_report.headers.present %}
+                <ul class="list-items">
+                    {% for header in scan_report.headers.present %}
+                    <li class="pass">{{ header }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <span class="status-fail">None found</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if scan_report.headers.missing %}
+        <div class="divider"></div>
+        <div class="info-grid">
+            <div class="info-label">Missing Headers:</div>
+            <div class="info-value">
+                <ul class="list-items">
+                    {% for header in scan_report.headers.missing %}
+                    <li class="fail">{{ header }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    
+    <div class="section-block">
+        <div class="section-header">
+            🌐 Domain Information
+        </div>
+        
+        {% if scan_report.domain_age %}
+        {% if scan_report.domain_age.available %}
+        <div class="info-grid">
+            <div class="info-label">Domain Created:</div>
+            <div class="info-value">{{ scan_report.domain_age.creation_date }}</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Domain Age:</div>
+            <div class="info-value">
+                {{ scan_report.domain_age.days_old }} days ({{ scan_report.domain_age.years_old }} years)
+                {% if scan_report.domain_age.is_very_new %}
+                <span class="status-fail"> - Very New Domain</span>
+                {% elif scan_report.domain_age.is_new %}
+                <span class="status-warning"> - New Domain</span>
+                {% else %}
+                <span class="status-pass"> - Established Domain</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Age Category:</div>
+            <div class="info-value">
+                {% if scan_report.domain_age.is_very_new %}
+                <span class="status-fail">{{ scan_report.domain_age.age_category }}</span>
+                {% elif scan_report.domain_age.is_new %}
+                <span class="status-warning">{{ scan_report.domain_age.age_category }}</span>
+                {% else %}
+                <span class="status-pass">{{ scan_report.domain_age.age_category }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="info-grid">
+            <div class="info-label">Domain Age:</div>
+            <div class="info-value">
+                <span class="status-info">{{ scan_report.domain_age.note }}</span>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <div class="divider"></div>
+        
+        {% if scan_report.suspicious_tld %}
+        <div class="info-grid">
+            <div class="info-label">Top-Level Domain:</div>
+            <div class="info-value">.{{ scan_report.suspicious_tld.tld }}</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">TLD Status:</div>
+            <div class="info-value">
+                {% if scan_report.suspicious_tld.is_suspicious %}
+                <span class="status-fail">⚠ Suspicious TLD</span>
+                {% else %}
+                <span class="status-pass">✓ Safe TLD</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if scan_report.suspicious_tld.is_suspicious %}
+        <div class="info-grid">
+            <div class="info-label">Risk Level:</div>
+            <div class="info-value">
+                <span class="status-fail">{{ scan_report.suspicious_tld.risk_level|upper }}</span>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Reason:</div>
+            <div class="info-value">{{ scan_report.suspicious_tld.reason }}</div>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <div class="divider"></div>
+        
+        {% if scan_report.domain_length %}
+        <div class="info-grid">
+            <div class="info-label">Domain Length:</div>
+            <div class="info-value">
+                {{ scan_report.domain_length.length }} characters
+                {% if scan_report.domain_length.is_suspicious %}
+                <span class="status-warning"> - Unusually Long</span>
+                {% else %}
+                <span class="status-pass"> - Normal</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Full Domain Length:</div>
+            <div class="info-value">{{ scan_report.domain_length.full_domain_length }} characters</div>
+        </div>
+        {% endif %}
+        
+        {% if scan_report.subdomain_depth %}
+        <div class="divider"></div>
+        <div class="info-grid">
+            <div class="info-label">Subdomain Depth:</div>
+            <div class="info-value">
+                {{ scan_report.subdomain_depth.depth }} level(s)
+                {% if scan_report.subdomain_depth.is_suspicious %}
+                <span class="status-warning"> - Deep Nesting</span>
+                {% else %}
+                <span class="status-pass"> - Normal</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Domain Parts:</div>
+            <div class="info-value">{{ scan_report.subdomain_depth.parts|join(' . ') }}</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    
+    <div class="section-block">
+        <div class="section-header">
+            🚨 Threat Analysis
+        </div>
+        
+        {% if scan_report.blacklist %}
+        <div class="info-grid">
+            <div class="info-label">Blacklist Status:</div>
+            <div class="info-value">
+                {% if scan_report.blacklist.is_blacklisted %}
+                <span class="status-fail">✗ Domain is Blacklisted</span>
+                {% else %}
+                <span class="status-pass">✓ Not Blacklisted</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if scan_report.blacklist.blacklist_sources %}
+        <div class="info-grid">
+            <div class="info-label">Blacklist Sources:</div>
+            <div class="info-value">
+                <ul class="list-items">
+                    {% for source in scan_report.blacklist.blacklist_sources %}
+                    <li class="fail">{{ source }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <div class="divider"></div>
+        
+        {% if scan_report.brand_impersonation %}
+        <div class="info-grid">
+            <div class="info-label">Brand Impersonation:</div>
+            <div class="info-value">
+                {% if scan_report.brand_impersonation.potential_impersonation %}
+                <span class="status-fail">⚠ Potential Impersonation Detected</span>
+                {% else %}
+                <span class="status-pass">✓ None Detected</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if scan_report.brand_impersonation.potential_impersonation %}
+        <div class="info-grid">
+            <div class="info-label">Suspected Brand:</div>
+            <div class="info-value"><strong>{{ scan_report.brand_impersonation.suspected_brand|upper }}</strong></div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Suspicious Keywords:</div>
+            <div class="info-value">
+                <ul class="list-items">
+                    {% for keyword in scan_report.brand_impersonation.suspicious_keywords %}
+                    <li class="fail">{{ keyword }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <div class="divider"></div>
+        
+        {% if scan_report.homograph %}
+        <div class="info-grid">
+            <div class="info-label">Homograph Attack:</div>
+            <div class="info-value">
+                {% if scan_report.homograph.is_suspicious %}
+                <span class="status-fail">⚠ Suspicious Characters Detected</span>
+                {% else %}
+                <span class="status-pass">✓ None Detected</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if scan_report.homograph.is_suspicious %}
+        <div class="info-grid">
+            <div class="info-label">Patterns Found:</div>
+            <div class="info-value">
+                <ul class="list-items">
+                    {% for pattern in scan_report.homograph.patterns_found %}
+                    <li class="fail">{{ pattern }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    
+    <div class="section-block">
+        <div class="section-header">
+            📄 Content Analysis
+        </div>
+        
+        {% if scan_report.title %}
+        <div class="info-grid">
+            <div class="info-label">Page Title:</div>
+            <div class="info-value">{{ scan_report.title }}</div>
+        </div>
+        {% endif %}
+        
+        {% if scan_report.domain_in_title %}
+        <div class="info-grid">
+            <div class="info-label">Domain in Title:</div>
+            <div class="info-value">
+                {% if scan_report.domain_in_title.domain_in_title %}
+                <span class="status-pass">✓ Yes</span>
+                {% else %}
+                <span class="status-warning">⚠ No</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="divider"></div>
+        
+        {% if scan_report.forms %}
+        <div class="info-grid">
+            <div class="info-label">Insecure Forms:</div>
+            <div class="info-value">
+                <span class="status-warning">{{ scan_report.forms|length }} form(s) with security issues</span>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Form Details:</div>
+            <div class="info-value">
+                <ul class="list-items">
+                    {% for form in scan_report.forms %}
+                    <li class="fail">{{ form.type }}: {{ form.reason }} (Action: {{ form.action }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% else %}
+        <div class="info-grid">
+            <div class="info-label">Forms:</div>
+            <div class="info-value"><span class="status-pass">✓ No insecure forms detected</span></div>
+        </div>
+        {% endif %}
+        
+        {% if scan_report.form_redirects %}
+        <div class="divider"></div>
+        <div class="info-grid">
+            <div class="info-label">External Form Redirects:</div>
+            <div class="info-value">
+                <span class="status-warning">{{ scan_report.form_redirects|length }} form(s) redirect externally</span>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-label">Redirect Details:</div>
+            <div class="info-value">
+                <ul class="list-items">
+                    {% for redirect in scan_report.form_redirects %}
+                    <li class="fail">Form {{ redirect.form_index }} → {{ redirect.external_domain }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Scan Metadata Section -->
+    <div class="section-block">
+        <div class="section-header">
+            ℹ️ Scan Information
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-label">Scan Status:</div>
+            <div class="info-value">
+                {% if scan_report.success %}
+                <span class="status-pass">✓ Completed Successfully</span>
+                {% else %}
+                <span class="status-fail">✗ Scan Failed</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-label">Robots.txt:</div>
+            <div class="info-value">
+                {% if scan_report.robots_allowed %}
+                <span class="status-pass">✓ Scanning Allowed</span>
+                {% elif scan_report.robots_bypassed %}
+                <span class="status-warning">⚠ Restrictions Bypassed</span>
+                {% else %}
+                <span class="status-fail">✗ Scanning Not Allowed</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-label">Scanned URL:</div>
+            <div class="info-value" style="word-break: break-all;">{{ scan_report.url }}</div>
+        </div>
+        
+        {% if scan_report.error %}
+        <div class="divider"></div>
+        <div class="info-grid">
+            <div class="info-label">Error Message:</div>
+            <div class="info-value"><span class="status-fail">{{ scan_report.error }}</span></div>
+        </div>
+        {% endif %}
+    </div>
+</div>

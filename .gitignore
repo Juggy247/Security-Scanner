@@ -1,0 +1,26 @@
+venv/
+__pycache__/
+*.pyc
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# ML models (remove if you REALLY want to track models)
+models/
+
+.env
+__pycache__/
+*.pyc
+
+DataCollections/
+models/
+scanner/ML_dir/
+train_ml_model.py
+test_ml_detector.py
+idea.txt
+practice.py
+mongo_test.py
+test/
