@@ -2,7 +2,7 @@
 
 A web-based phishing and security scanner built with Python and Flask. It analyzes URLs using a combination of real-time HTTP checks and domain-level heuristics to detect suspicious or malicious websites — even when the target site is offline.
 
-Built by **Thu Htoo Zaw** — [github.com/juggy247](https://github.com/juggy247)
+[github.com/juggy247](https://github.com/juggy247)
 
 ---
 
@@ -430,8 +430,8 @@ tabulate
 
 ## Disclaimer
 
-This tool is built for **educational purposes**. Always obtain permission before scanning websites you do not own. The scanner respects `robots.txt` by default and includes an optional bypass for research use only.
+This tool is built for **educational purposes**.
 
 ---
 
-*Built with Python 🐍 | Thu Htoo Zaw | [github.com/juggy247](https://github.com/juggy247)*
+*Built with Python 🐍 | [github.com/juggy247](https://github.com/juggy247)*
