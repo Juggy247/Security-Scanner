@@ -14,6 +14,7 @@ from .domain_checks import (
     check_suspicious_tld, check_subdomain_depth, check_brand_impersonation
 )
 from .utils import session_get, fetch_url
+from .netguard import UnsafeUrlError
 from .ml_advisory import run_ml_advisory
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,9 @@ class ScanReport:
     brand_impersonation: dict = None
     # Advisory ML signal (display only, never part of get_verdict). None when ML is off or the page was not fetched.
     ml_analysis: dict = None
+
+    # Set when the page redirected to an address the network guard refused to fetch.
+    blocked_redirect: dict = None
     
     def _check_https_issues(self) -> List[Dict[str, str]]:
         
@@ -297,6 +301,7 @@ class ScanReport:
             self._check_security_header_issues,
             self._check_robots_issues,
             self._check_offline_issues,
+            self._check_blocked_redirect_issues,
         ]
         
         for check_method in check_methods:
@@ -407,6 +412,20 @@ class ScanReport:
             ))
         
         return issues
+
+    def _check_blocked_redirect_issues(self) -> List[Dict[str, str]]:
+        """A page that redirects to a private or internal address is a finding of its own."""
+        issues = []
+
+        if self.blocked_redirect:
+            issues.append(create_issue(
+                issue_type="Redirect to a Private or Internal Address",
+                description=f"The page redirects to {self.blocked_redirect.get('target')}, which the scanner refused to fetch",
+                risk="Ordinary public sites do not redirect to internal addresses. This can be an attempt to make the scanner reach internal services",
+                severity="critical"
+            ))
+
+        return issues
     
     def to_dict(self) -> dict:
         """Serialize ScanReport to a JSON-safe dictionary"""
@@ -431,6 +450,7 @@ class ScanReport:
             'subdomain_depth': self.subdomain_depth,
             'brand_impersonation': self.brand_impersonation,
             'ml_analysis': self.ml_analysis,
+            'blocked_redirect': self.blocked_redirect,
         }
 
 
@@ -497,6 +517,20 @@ class SecurityScanner:
 
             report.success = True
             print("Scan Completed. ")
+
+        except UnsafeUrlError as e:
+            # A fetch or redirect hop was refused by the network guard. A hop to a different host than the one
+            # submitted means the page redirected somewhere private, which is a finding and not just an error.
+            report.error = str(e)
+            print(f" Scan stopped: {e}")
+            blocked_host = urlparse(e.url or "").hostname
+            if blocked_host and blocked_host != parsed_url.hostname:
+                report.blocked_redirect = {"target": (e.url or "")[:200], "reason": e.reason}
+
+            try:
+                self._run_domain_checks_only(report, domain, url)
+            except Exception:
+                pass
 
         except Exception as e:
             report.error = str(e)

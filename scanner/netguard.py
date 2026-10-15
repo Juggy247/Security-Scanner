@@ -25,6 +25,11 @@ PRIVATE_MESSAGE = "Scanning private or internal addresses is not allowed"
 class UnsafeUrlError(requests.exceptions.RequestException):
     """Raised before connecting when a URL, or a redirect hop, points at a non-public address."""
 
+    def __init__(self, message: str, url: str = None, reason: str = None):
+        super().__init__(message)
+        self.url = url
+        self.reason = reason
+
 
 def default_resolver(host: str, port: int) -> List[str]:
     return [info[4][0] for info in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)]
@@ -91,7 +96,7 @@ class GuardedSession(requests.Session):
     def send(self, request, **kwargs):
         allowed, reason = check_public_url(request.url, self._resolver)
         if not allowed:
-            raise UnsafeUrlError(f"{reason}: {request.url}")
+            raise UnsafeUrlError(f"{reason}: {request.url}", url=request.url, reason=reason)
         return super().send(request, **kwargs)
 
 
