@@ -1,53 +1,6 @@
-from .text_processing import chunk_text, clean_text, detect_language, extract_page_text, hash_text
-from .fetcher import fetch_page
-from .records import build_record
-from .scoring import (
-    DEFAULT_SIMILARITY_THRESHOLD,
-    UNKNOWN_MARGIN,
-    LazySentenceTransformer,
-    compare_page_to_references,
-    decide_similarity_verdict,
-    encode_texts,
-    get_model,
-    load_reference_texts,
-    model,
-    score_candidate_page,
-    util,
-)
-from .evaluation import (
-    assign_domain_split,
-    evaluate_binary_predictions,
-    evaluate_threshold_on_examples,
-    normalize_label_value,
-    split_labeled_examples,
-    split_reference_texts,
-    tune_similarity_threshold,
-)
+"""AI similarity pipeline.
 
-__all__ = [
-    "chunk_text",
-    "clean_text",
-    "detect_language",
-    "extract_page_text",
-    "hash_text",
-    "fetch_page",
-    "build_record",
-    "DEFAULT_SIMILARITY_THRESHOLD",
-    "UNKNOWN_MARGIN",
-    "LazySentenceTransformer",
-    "compare_page_to_references",
-    "decide_similarity_verdict",
-    "encode_texts",
-    "get_model",
-    "load_reference_texts",
-    "model",
-    "score_candidate_page",
-    "util",
-    "assign_domain_split",
-    "evaluate_binary_predictions",
-    "evaluate_threshold_on_examples",
-    "normalize_label_value",
-    "split_labeled_examples",
-    "split_reference_texts",
-    "tune_similarity_threshold",
-]
+Import from the submodules (ai.records, ai.text_processing, ai.fetcher, ai.scoring, ai.evaluation). Nothing is
+re-exported here on purpose, so importing one part does not pull in the others. Only ai.scoring (and ai.evaluation,
+which uses it) loads the embedding library.
+"""
