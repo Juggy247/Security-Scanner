@@ -474,7 +474,7 @@ CC BY 4.0 and intended for anti-phishing research only. No OpenPhish or PhishTan
 
 - Refresh and grow the reference set, and re-measure on a new split (similarity to a fixed set decays as campaigns change)
 - Close the SSRF gap (resolve hostnames, re-check redirects)
-- Package cleanup in `ai/` (lazy torch import, remove the compatibility shim)
+- Make the embedding-library import in `ai.scoring` lazy (the import tests pin the current behavior)
 - Rewrite the weaker assertions in `tests/test_ai_evaluation.py`
 
 ---
