@@ -552,7 +552,7 @@ class SecurityScanner:
             logger.debug(f"HTTPs check failed: {e}")
 
         try:
-            domain = urlparse(response.url).netloc
+            domain = urlparse(response.url).hostname
             report.ssl = check_ssl(domain)
         except Exception as e:
             logger.debug(f"SSL check failed: {e}")

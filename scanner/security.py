@@ -4,6 +4,8 @@ import socket
 from typing import Dict, Any
 from urllib.parse import urlparse, urljoin
 
+from .netguard import PRIVATE_MESSAGE, default_resolver, is_public_address
+
 def check_https_final(url: str, response) -> Dict[str, Any]:
     final_url = response.url
     final_scheme = urlparse(final_url).scheme
@@ -12,10 +14,17 @@ def check_https_final(url: str, response) -> Dict[str, Any]:
         "redirected_to_https": urlparse(url).scheme == "http" and final_scheme == "https"
     }
 
-def check_ssl(domain: str) -> dict:
+def check_ssl(domain: str, resolver=default_resolver) -> dict:
     try:
+        addresses = resolver(domain, 443)
+        if not addresses:
+            return {"valid": False, "error": "Host did not resolve"}
+        if any(not is_public_address(address) for address in addresses):
+            return {"valid": False, "error": PRIVATE_MESSAGE}
+
         context = ssl.create_default_context()
-        with socket.create_connection((domain, 443), timeout=5) as sock:
+        # Connect to the address that was just checked, not to the name: the name could resolve differently a second time.
+        with socket.create_connection((addresses[0], 443), timeout=5) as sock:
             with context.wrap_socket(sock, server_hostname=domain) as ssocks:
                 cert = ssocks.getpeercert()
                 issuer = "Unknown"
