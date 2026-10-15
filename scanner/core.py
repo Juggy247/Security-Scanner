@@ -14,9 +14,11 @@ from .domain_checks import (
     check_suspicious_tld, check_subdomain_depth, check_brand_impersonation
 )
 from .utils import session_get, fetch_url
+from .ml_advisory import run_ml_advisory
 
 logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 
 def create_issue(issue_type: str, description: str, risk: str, severity: str) -> Dict[str, str]:
@@ -52,6 +54,8 @@ class ScanReport:
     suspicious_tld: dict = None 
     subdomain_depth: dict = None
     brand_impersonation: dict = None
+    # Advisory ML signal (display only, never part of get_verdict). None when ML is off or the page was not fetched.
+    ml_analysis: dict = None
     
     def _check_https_issues(self) -> List[Dict[str, str]]:
         
@@ -426,14 +430,16 @@ class ScanReport:
             'suspicious_tld': self.suspicious_tld,
             'subdomain_depth': self.subdomain_depth,
             'brand_impersonation': self.brand_impersonation,
+            'ml_analysis': self.ml_analysis,
         }
 
 
 
 class SecurityScanner:
-    def __init__(self, bypass_robots: bool = True):
+    def __init__(self, bypass_robots: bool = True, enable_ml: bool = False):
         self.session = session_get()
         self.bypass_robots = bypass_robots
+        self.enable_ml = enable_ml
     
     def scan(self, url: str) -> ScanReport:
         report = ScanReport(url=url, success=False)
@@ -484,6 +490,11 @@ class SecurityScanner:
             self._run_online_checks(report, response, soup)
             self._run_domain_checks(report, domain, report.title)
 
+            if self.enable_ml:
+                report.ml_analysis = run_ml_advisory(
+                    response.content, response.status_code, response.headers.get("Content-Type")
+                )
+
             report.success = True
             print("Scan Completed. ")
 
@@ -492,8 +503,8 @@ class SecurityScanner:
             print(f" Scan failed: {e}")
 
             try:
-                self._run_domain_checks_only(report, domain)
-            except:
+                self._run_domain_checks_only(report, domain,url)
+            except Exception:
                 pass
         
         return report

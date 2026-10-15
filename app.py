@@ -16,7 +16,8 @@ app.secret_key = os.getenv('SECRET_KEY')
 
 app.register_blueprint(admin_bp)
 
-scanner = SecurityScanner()
+ENABLE_ML = os.getenv('ENABLE_ML', '0').lower() in {'1', 'true', 'yes'}
+scanner = SecurityScanner(enable_ml=ENABLE_ML)
 
 app.config['SWAGGER'] = {
     'title': 'Security Scanner API',

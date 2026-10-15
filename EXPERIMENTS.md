@@ -25,3 +25,14 @@
 - Margin quantiles q10/25/50/75/90. Phishing validation: 0.008 / 0.059 / 0.137 / 0.298 / 0.436. Phishing test: -0.005 / 0.031 / 0.080 / 0.146 / 0.203. Benign validation: -0.153 / -0.098 / -0.038 / 0.019 / 0.060. Benign test: -0.113 / -0.077 / -0.030 / 0.013 / 0.071.
 - Reading: phishing margins moved down, benign margins stayed put. Consistent with drift (test pages are later in time) and with validation inflation from kit families. Not separated. No parameter was changed after this.
 - Production rule changed to the one-sided threshold 0.10 after the final run, to match what was measured.
+
+The word-count diagnostic (validation only)
+Words	Benign pages	Benign false positives	Phishing pages	Phishing caught
+20-50	3	1	15	10
+50-100	6	0	28	24
+100-300	14	1	26	11
+300-1000	26	0	21	14
+1000+	51	3	10	6
+The counts are too small to read much into. The short bands hold 3 and 6 benign pages, so “1 of 3” is not a rate. This doesn’t show that short benign pages are more likely to be false positives, and it doesn’t rule it out either. My guess about example.com’s 27 words stays a guess.
+Phishing recall differs by length. Short phishing pages (50-100 words) are caught at 24 of 28, but 100-300 words only 11 of 26. The recall also depends on how many pages from kit families fall in each band, which I can’t see here.
+The benign pool is heavily skewed to long pages: 77 of 100 are above 300 words, against 31 of 100 phishing pages. That’s the length confound I flagged before. Similarity beat the word-count baseline on test (recall 0.42 against 0.17, at similar false-positive rates), but a good share of the benign pages are long, so keep that caveat in the write-up.

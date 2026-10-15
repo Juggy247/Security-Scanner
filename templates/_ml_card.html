@@ -1,0 +1,64 @@
+{# Advisory text-similarity card. Display only: it never reuses verdict_class and never feeds the rule-based verdict. #}
+{% set ml = scan_report.ml_analysis %}
+{% if ml %}
+{% set ml_recall = '42%' %}
+{% set ml_fpr = '4%' %}
+{# The two numbers above come from the one held-out test run (EXPERIMENTS.md). Update them if the rule or references change. #}
+{% set ml_reasons = {
+    'http_error': 'the page returned an HTTP error status',
+    'not_html': 'the response was not an HTML page',
+    'empty_body': 'the page body was empty',
+    'short_text': 'the page has too little text (fewer than 20 words)',
+    'non_english': 'the page text is not English, and this check reads English only',
+    'low_language_confidence': 'the page language could not be identified reliably',
+    'flagged': 'the page looks like an error, parked-domain, challenge or default page',
+    'no_references': 'no reference pages are available',
+    'error': 'the check failed'
+} %}
+{% if ml.status == 'ok' and ml.verdict == 'fake' %}
+    {% set ml_state = 'flagged' %}
+{% elif ml.status == 'ok' and ml.verdict == 'real' %}
+    {% set ml_state = 'notflagged' %}
+{% else %}
+    {% set ml_state = 'notscored' %}
+{% endif %}
+<style>
+    .ml-card { padding: 24px 30px; background: #f7f7fb; border-top: 2px solid #f0f0f0; border-left: 5px solid #a0aec0; }
+    .ml-card.ml-flagged { border-left-color: #805ad5; }
+    .ml-title { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 10px; }
+    .ml-tag { font-weight: 400; color: #718096; margin-left: 8px; }
+    .ml-status { font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 10px; }
+    .ml-details { list-style: none; font-size: 13px; color: #4a5568; margin-bottom: 10px; }
+    .ml-details li { padding: 2px 0; }
+    .ml-note { font-size: 12px; color: #718096; line-height: 1.5; }
+</style>
+<div class="ml-card ml-{{ ml_state }}">
+    <div class="ml-title">Text-similarity signal <span class="ml-tag">experimental, advisory</span></div>
+
+    {% if ml_state == 'flagged' %}
+    <div class="ml-status">Flagged: text resembles known phishing pages</div>
+    {% elif ml_state == 'notflagged' %}
+    <div class="ml-status">Not flagged</div>
+    {% else %}
+    <div class="ml-status">Not scored: {{ ml_reasons.get(ml.reason|default(''), 'reason unavailable') }}</div>
+    {% endif %}
+
+    {% if ml_state != 'notscored' %}
+    <ul class="ml-details">
+        {% if ml.margin is number %}
+        <li>Margin {{ '%.3f'|format(ml.margin) }}{% if ml.threshold is number %} (flagged above {{ '%.2f'|format(ml.threshold) }}){% endif %}: similarity to known phishing pages minus similarity to known benign pages.</li>
+        {% endif %}
+        {% if ml.word_count %}<li>Page text: {{ ml.word_count }} words.</li>{% endif %}
+        {% if ml.reference_pages %}<li>Compared with {{ ml.reference_pages.phishing }} phishing and {{ ml.reference_pages.benign }} benign reference pages.</li>{% endif %}
+    </ul>
+    {% elif ml.flags %}
+    <ul class="ml-details"><li>Page quality flags: {{ ml.flags|join(', ') }}</li></ul>
+    {% endif %}
+
+    <div class="ml-note">
+        Advisory only: this does not change the verdict above. In a held-out test where half of the pages were phishing,
+        it flagged {{ ml_recall }} of the phishing pages and {{ ml_fpr }} of the benign ones. Real traffic contains far
+        less phishing, so most flags would be false alarms. "Not flagged" does not mean a page is trustworthy. It reads English page text only.
+    </div>
+</div>
+{% endif %}
