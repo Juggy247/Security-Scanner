@@ -50,7 +50,7 @@ time: wait for the owner's output before continuing.
 | `scanner/netguard.py` | Resolves hostnames and blocks non-public addresses. `GuardedSession` checks every request and redirect hop. Unresolvable names are allowed on purpose (offline mode) |
 | `scanner/ml_advisory.py` | Adapter: `run_ml_advisory(content, status_code, content_type)` scores page bytes the scanner already fetched. Never raises. Imports `ai` lazily |
 | `templates/_ml_card.html` | Advisory card, included from `report.html`. Renders nothing when `ml_analysis` is None. Hardcodes the test numbers (recall 42%, false-positive rate 4%) |
-| `tests/` | `test_ai_evaluation.py` (7), `test_ai_metrics.py` (15, pure functions, exact counts), `test_ai_scores.py` (7, fake encoder), `test_ai_imports.py` (3), `test_netguard.py` (64), `test_netguard_wiring.py` (10), `test_score_html.py` (11), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (42, live sites; 42 passed on 2026-10-16 with the guard wired in). 215 tests without `test_integration.py`, 257 with it. Assertions in the new test files were mutation-checked: a temporary change to the code was tried and the matching test failed (not every test, and the runs are not recorded in git) |
+| `tests/` | `test_ai_evaluation.py` (7), `test_ai_metrics.py` (15, pure functions, exact counts), `test_ai_scores.py` (7, fake encoder), `test_ai_imports.py` (3), `test_netguard.py` (64), `test_netguard_wiring.py` (10), `test_scanner_blocked_redirect.py` (8), `test_ssl_guard.py` (8), `test_score_html.py` (11), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (42, live sites; 42 passed on 2026-10-16 with the guard wired in). 231 tests without `test_integration.py`, 273 with it. Assertions in the new test files were mutation-checked: a temporary change to the code was tried and the matching test failed (not every test, and the runs are not recorded in git) |
 | `ML/`, `models/`, `DataCollections/`, `train_ml_model.py`, `test_ml_detector.py` | Legacy ML plan. Nothing in `app.py`, `scanner/` or the tests imports it. The two scripts import a missing `scanner.ml_detector` |
 
 ## Data (MongoDB `security_scanner.page_records`, schema version 4)
@@ -117,7 +117,7 @@ Storage: unique index on `url`, partial unique index on `content.text_hash`, `in
    validation had too few short pages to say whether short pages are worse.
 6. `ai/scoring.py` imports the embedding library at module level, pinned by `tests/test_ai_imports.py`. Making it lazy is
    optional.
-7. Remaining limits of the network guard: DNS rebinding (the check and the connection resolve the name separately), `check_ssl` in `scanner/security.py` opens its own socket, and `fetch_url` has no size cap or total deadline (the timeout applies per read).
+7. Remaining limits of the network guard: DNS rebinding on the page fetch (the check and the connection resolve the name separately), and no size cap or total deadline in the scanner's fetch (`fetch_url` has a per-read timeout only).
 
 ## Roadmap
 
