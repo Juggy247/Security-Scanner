@@ -397,11 +397,11 @@ Verdict: SUSPICIOUS
 | `tests/test_units.py` | 61 | nothing external |
 | `tests/test_ai_evaluation.py` | 7 | the MiniLM model (downloads once) |
 | `tests/test_ai_metrics.py`, `test_ai_scores.py`, `test_ai_imports.py` | 15, 7, 3 | nothing external |
-| `tests/test_netguard.py`, `test_netguard_wiring.py`, `test_scanner_blocked_redirect.py`, `test_ssl_guard.py` | 64, 10, 8, 8 | nothing external |
+| `tests/test_netguard.py`, `test_netguard_wiring.py`, `test_scanner_blocked_redirect.py`, `test_ssl_guard.py` | 64, 10, 8, 10 | nothing external |
 | `tests/test_score_html.py`, `test_ml_advisory.py`, `test_scanner_ml.py`, `test_ml_card.py` | 11, 10, 9, 18 | nothing external (fake encoder) |
 | `tests/test_integration.py` | 42 | live sites and MongoDB, slow |
 
-Run with `pytest tests/ -q --ignore=tests/test_integration.py` (231 tests). The integration tests fetch real websites: 42 passed on 2026-10-16 with the guard wired in (ML off, the default).
+Run with `pytest tests/ -q --ignore=tests/test_integration.py` (233 tests). The integration tests fetch real websites: 42 passed on 2026-10-16 with the guard wired in (ML off, the default).
 
 ---
 
