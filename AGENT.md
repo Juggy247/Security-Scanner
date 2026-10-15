@@ -40,8 +40,8 @@ time: wait for the owner's output before continuing.
 | `ai/records.py` | Builds a `PageRecord` from a URL or supplied HTML and applies the gates |
 | `ai/scoring.py` | Lazy MiniLM model (with a lock), reference index, scoring, verdict rules, `score_html`, `get_reference_index` |
 | `ai/evaluation.py` | Metrics, sweeps, Wilson intervals, baseline, near-duplicates |
-| `ai/__init__.py` | Re-exports names from the modules above (imports torch eagerly) |
-| `dataset_collector.py` | Collection CLI (CSV input) plus a compatibility shim re-exporting names from `ai` for old tests |
+| `ai/__init__.py` | Empty by design (docstring only). Import from the submodules |
+| `dataset_collector.py` | Collection CLI (CSV input) |
 | `dataset_schema.py` | Record dataclasses, schema version 4, allowed label sources |
 | `mongo_dataset.py` | `PageRecordStore` (MongoDB, GridFS raw HTML, `find_references`, `find_examples`) |
 | `ingest_phreshphish.py` | Capped sample ingestion from PhreshPhish, dry run by default |
@@ -49,7 +49,7 @@ time: wait for the owner's output before continuing.
 | `EXPERIMENTS.md` | Log of every experiment, including failures, and the pre-registration |
 | `scanner/ml_advisory.py` | Adapter: `run_ml_advisory(content, status_code, content_type)` scores page bytes the scanner already fetched. Never raises. Imports `ai` lazily |
 | `templates/_ml_card.html` | Advisory card, included from `report.html`. Renders nothing when `ml_analysis` is None. Hardcodes the test numbers (recall 42%, false-positive rate 4%) |
-| `tests/` | `test_ai_evaluation.py` (19), `test_score_html.py` (11, no model, no MongoDB), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (live sites, run separately) |
+| `tests/` | `test_ai_evaluation.py` (14), `test_ai_imports.py` (3), `test_score_html.py` (11, no model, no MongoDB), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (live sites, run separately). 126 tests without `test_integration.py` |
 | `ML/`, `models/`, `DataCollections/`, `train_ml_model.py`, `test_ml_detector.py` | Legacy ML plan. Nothing in `app.py`, `scanner/` or the tests imports it. The two scripts import a missing `scanner.ml_detector` |
 
 ## Data (MongoDB `security_scanner.page_records`, schema version 4)
@@ -87,7 +87,7 @@ Storage: unique index on `url`, partial unique index on `content.text_hash`, `in
   not flagged, not verified legitimate. `unknown` only when a page cannot be scored (short, non-English, flagged, no references).
 - `decide_symmetric_verdict` (dead zone with abstention) is experimental. It never met the pre-set limits.
 - `score_html(html, index)` scores HTML the caller already fetched, with the same gates as collection, never raises, returns
-  scores as None when not computed. `score_candidate_page(url)` is superseded: it refetches without URL validation.
+  scores as None when not computed. The old URL-fetching scorer was removed.
 
 ## Results (see EXPERIMENTS.md for the full log)
 
@@ -108,18 +108,13 @@ Storage: unique index on `url`, partial unique index on `content.text_hash`, `in
 
 1. `tests/test_ai_evaluation.py` (as last reviewed): several assertions cannot fail, `predict_mean_similarity` bypasses the
    pipeline, `predict_threshold` ignores its argument, abstentions are scored as benign in the local harness. Needs a rewrite.
-2. `ai/__init__.py` imports `scoring`, so any `import ai.x` loads torch. The shim in `dataset_collector.py` exists for
-   `test_units.py`. Package cleanup is pending.
-3. `tune_similarity_threshold`, `split_reference_texts`, `split_labeled_examples`, `assign_domain_split` in `ai/evaluation.py`
-   are legacy (tests still import some). Splits are now assigned by the ingest role.
-4. Short-text language detection is unreliable (`langdetect`). A plain English sentence scored 0.86.
-5. `score_candidate_page` is unsafe for user input. `scanner/app.py:is_safe_url` does not resolve hostnames or re-check redirects.
-6. `requirements.txt` must list `sentence-transformers`, `numpy`, `huggingface-hub>=1.31.0,<2.0` and `datasets`. Verify in a
+2. Short-text language detection is unreliable (`langdetect`). A plain English sentence scored 0.86.
+3. `requirements.txt` must list `sentence-transformers`, `numpy`, `huggingface-hub>=1.31.0,<2.0` and `datasets`. Verify in a
    fresh virtual environment.
-7. The card hardcodes the measured numbers (42% and 4%). If the threshold or references change, update `_ml_card.html` and
+4. The card hardcodes the measured numbers (42% and 4%). If the threshold or references change, update `_ml_card.html` and
    re-measure on a new split.
-8. The `scanner.test_scanner` harness was removed.
-9. example.com (27 words) is flagged as phishing at margin 0.169, a concrete false positive. A word-count diagnostic on
+5. The `scanner.test_scanner` harness was removed.
+6. example.com (27 words) is flagged as phishing at margin 0.169, a concrete false positive. A word-count diagnostic on
    validation had too few short pages to say whether short pages are worse.
 
 ## Roadmap

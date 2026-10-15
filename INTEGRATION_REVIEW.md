@@ -1,5 +1,7 @@
 # INTEGRATION_REVIEW.md
 
+Historical review, written before the integration. See AGENT.md for the current state.
+
 Read-only review. Do not edit, create or delete any file, and do not write to MongoDB. Follow AGENT.md.
 Answer every question below with file and line references. When something is not visible in the code, say "not found" instead of guessing.
 

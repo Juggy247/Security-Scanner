@@ -395,7 +395,8 @@ Verdict: SUSPICIOUS
 | File | Tests | Needs |
 |---|---|---|
 | `tests/test_units.py` | 61 | nothing external |
-| `tests/test_ai_evaluation.py` | 19 | the MiniLM model (downloads once) |
+| `tests/test_ai_evaluation.py` | 14 | the MiniLM model (downloads once) |
+| `tests/test_ai_imports.py` | 3 | nothing external |
 | `tests/test_score_html.py`, `test_ml_advisory.py`, `test_scanner_ml.py`, `test_ml_card.py` | 11, 10, 9, 18 | nothing external (fake encoder) |
 | `tests/test_integration.py` | 42 | live sites and MongoDB, slow |
 
