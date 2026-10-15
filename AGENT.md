@@ -47,7 +47,9 @@ time: wait for the owner's output before continuing.
 | `ingest_phreshphish.py` | Capped sample ingestion from PhreshPhish, dry run by default |
 | `evaluate_split.py` | Evaluation report per split. The test split needs `--final` and fixed parameters |
 | `EXPERIMENTS.md` | Log of every experiment, including failures, and the pre-registration |
-| `tests/` | `test_ai_evaluation.py`, `test_score_html.py` (no model, no MongoDB), `test_units.py`, `test_integration.py` (live sites) |
+| `scanner/ml_advisory.py` | Adapter: `run_ml_advisory(content, status_code, content_type)` scores page bytes the scanner already fetched. Never raises. Imports `ai` lazily |
+| `templates/_ml_card.html` | Advisory card, included from `report.html`. Renders nothing when `ml_analysis` is None. Hardcodes the test numbers (recall 42%, false-positive rate 4%) |
+| `tests/` | `test_ai_evaluation.py` (19), `test_score_html.py` (11, no model, no MongoDB), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (live sites, run separately) |
 | `ML/`, `models/`, `DataCollections/`, `train_ml_model.py`, `test_ml_detector.py` | Legacy ML plan. Nothing in `app.py`, `scanner/` or the tests imports it. The two scripts import a missing `scanner.ml_detector` |
 
 ## Data (MongoDB `security_scanner.page_records`, schema version 4)
@@ -112,20 +114,21 @@ Storage: unique index on `url`, partial unique index on `content.text_hash`, `in
    are legacy (tests still import some). Splits are now assigned by the ingest role.
 4. Short-text language detection is unreliable (`langdetect`). A plain English sentence scored 0.86.
 5. `score_candidate_page` is unsafe for user input. `scanner/app.py:is_safe_url` does not resolve hostnames or re-check redirects.
-6. The scanner's `ScanReport` is rebuilt as `ScanReport(**raw_data)` from the Flask session cookie (about 4 KB limit).
-7. `requirements.txt` must list `sentence-transformers`, `numpy`, `huggingface-hub>=1.31.0,<2.0` and `datasets`. Verify in a
+6. `requirements.txt` must list `sentence-transformers`, `numpy`, `huggingface-hub>=1.31.0,<2.0` and `datasets`. Verify in a
    fresh virtual environment.
+7. The card hardcodes the measured numbers (42% and 4%). If the threshold or references change, update `_ml_card.html` and
+   re-measure on a new split.
+8. The `scanner.test_scanner` harness was removed.
+9. example.com (27 words) is flagged as phishing at margin 0.169, a concrete false positive. A word-count diagnostic on
+   validation had too few short pages to say whether short pages are worse.
 
 ## Roadmap
 
 - Done: collection pipeline, PhreshPhish ingestion, evaluation with a held-out test, `score_html`.
-- Phase 6, scanner integration (display only, ML never changes the rule-based verdict):
-  1. Import `ai` lazily inside the ML step, never at the top of `scanner/core.py`.
-  2. Add `ml_analysis` to the `ScanReport` dataclass and to `to_dict()` in the same change.
-  3. Opt-in `SecurityScanner(enable_ml=False)`. Wrap the whole step so a failure gives `status: error`. Reuse `response.content`.
-  4. Build the index lazily on first use (the Flask reloader imports twice). About 6 s once, about 0.3 s per scan.
-  5. Report card wording: "flagged", "not flagged", "not scored". Show the measured numbers. Keep Jinja autoescaping on.
-  6. Store only small fields in the session (verdict, scores, margin, reason, flags).
-- Phase 7: fake-encoder tests for the scanner step, update the README (test counts, ML section, PhreshPhish citation).
-- Cleanup: archive the legacy ML folders outside the repo after checking `training_data`, remove the shim and the eager
-  imports in `ai/__init__.py`, remove `score_candidate_page`.
+- Phase 6, scanner integration (done, display only): `SecurityScanner(enable_ml=False)` by default, switched on with the
+  `ENABLE_ML` environment variable in `app.py`. The step runs after the page is parsed, reuses `response.content`, is wrapped
+  so a failure gives `status: error`, and never affects `get_verdict()`. The result is stored in `ScanReport.ml_analysis`
+  (kept small for the Flask session cookie: about 190 bytes measured, total cookie about 1.4 KB for simple pages).
+  The first scan builds the reference index (about 6 s), later scans add about 0.3 s. Card wording: "Flagged: text resembles
+  known phishing pages", "Not flagged", "Not scored: <reason>". Never "safe".
+- Remaining: update the README, archive the legacy ML folders, package cleanup.

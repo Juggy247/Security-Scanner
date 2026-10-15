@@ -36,3 +36,6 @@ Words	Benign pages	Benign false positives	Phishing pages	Phishing caught
 The counts are too small to read much into. The short bands hold 3 and 6 benign pages, so “1 of 3” is not a rate. This doesn’t show that short benign pages are more likely to be false positives, and it doesn’t rule it out either. My guess about example.com’s 27 words stays a guess.
 Phishing recall differs by length. Short phishing pages (50-100 words) are caught at 24 of 28, but 100-300 words only 11 of 26. The recall also depends on how many pages from kit families fall in each band, which I can’t see here.
 The benign pool is heavily skewed to long pages: 77 of 100 are above 300 words, against 31 of 100 phishing pages. That’s the length confound I flagged before. Similarity beat the word-count baseline on test (recall 0.42 against 0.17, at similar false-positive rates), but a good share of the benign pages are long, so keep that caveat in the write-up.
+
+## Scanner observations
+- `scan()`'s crash fallback called `_run_domain_checks_only` without its `url` argument, so the fallback never ran. It was fixed, and a regression test proves it can fail.
