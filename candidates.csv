@@ -1,0 +1,5 @@
+url,label,source,evidence,listed_at
+https://en.wikipedia.org/wiki/Phishing,benign,manual_benign,Wikipedia article page,2026-10-14
+https://docs.python.org/3/,benign,manual_benign,Python documentation homepage,2026-10-14
+https://github.com/login,benign,manual_benign,Legitimate login page (hard negative),2026-10-14
+https://github.com,benign,manual_benign,GitHub homepage (nav-stripping check),2026-10-14
