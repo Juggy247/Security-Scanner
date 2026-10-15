@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 from sentence_transformers import SentenceTransformer, util
 
 from mongo_dataset import PageRecordStore
-from .fetcher import fetch_page
 from dataclasses import dataclass, field
 from .records import MIN_LANGUAGE_PROBABILITY, MIN_WORDS, REQUIRED_LANGUAGE
 from .text_processing import (
@@ -15,7 +14,6 @@ from .text_processing import (
     detect_language,
     detect_language_with_confidence,
     extract_page,
-    extract_page_text,
     hash_text,
     quality_flags,
 )
@@ -25,9 +23,6 @@ from .text_processing import (
 DEFAULT_THRESHOLD = 0.10
 # Symmetric rule with abstention, kept for experiments only.
 DEFAULT_DEAD_ZONE = 0.02
-# Legacy names, still imported by ai/__init__.py and dataset_collector.py. Remove during package cleanup.
-DEFAULT_SIMILARITY_THRESHOLD = DEFAULT_THRESHOLD
-UNKNOWN_MARGIN = 0.01  # unused
 MAX_REFERENCE_CHUNKS = 4   # chunks kept per reference page, so a long article can't outweigh a short login page
 TOP_K = 3                  # candidate chunks that count toward each class score
 MAX_CANDIDATE_CHUNKS = 10  # bounds run time on very long pages
@@ -228,69 +223,6 @@ def load_reference_texts(label_name: str, limit: Optional[int] = None, split: st
         if text:
             texts.append(text)
     return texts
-
-
-def score_candidate_page(
-    candidate_url: str,
-    real_limit: Optional[int] = None,
-    fake_limit: Optional[int] = None,
-    threshold: float = DEFAULT_THRESHOLD,
-    split: str = "train",
-):
-    success, fetch_data, payload = fetch_page(candidate_url)
-
-    if not success:
-        return {
-            "status": "failed",
-            "reason": payload,
-            "real_score": 0.0,
-            "fake_score": 0.0,
-            "margin": 0.0,
-            "verdict": "unknown",
-            "confidence": 0.0,
-        }
-
-    page_text = extract_page_text(payload)
-    page_text = clean_text(page_text)
-
-    if not page_text or len(page_text.split()) < 10:
-        return {
-            "status": "failed",
-            "reason": "text too short for reliable comparison",
-            "real_score": 0.0,
-            "fake_score": 0.0,
-            "margin": 0.0,
-            "verdict": "unknown",
-            "confidence": 0.0,
-        }
-
-    real_texts = load_reference_texts("benign", limit=real_limit, split=split)
-    fake_texts = load_reference_texts("phishing", limit=fake_limit, split=split)
-
-    if not real_texts or not fake_texts:
-        return {
-            "status": "failed",
-            "reason": "missing reference data",
-            "real_score": 0.0,
-            "fake_score": 0.0,
-            "margin": 0.0,
-            "verdict": "unknown",
-            "confidence": 0.0,
-        }
-
-    result = compare_page_to_references(page_text, real_texts, fake_texts, threshold=threshold)
-    
-    return {
-        "status": "ok",
-        "url": candidate_url,
-        "final_url": fetch_data.get("final_url"),
-        "real_score": result["real_score"],
-        "fake_score": result["fake_score"],
-        "margin": result["margin"],
-        "verdict": result["verdict"],
-        "confidence": result["confidence"],
-        "reason": result.get("reason"),
-    }
 
 
 # ---- Scoring HTML the caller already fetched (used by the scanner) ----

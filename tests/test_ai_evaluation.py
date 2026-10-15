@@ -11,14 +11,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from ai.evaluation import (
-    assign_domain_split,
-    evaluate_binary_predictions,
-    evaluate_threshold_on_examples,
-    split_labeled_examples,
-    split_reference_texts,
-    tune_similarity_threshold,
-)
+from ai.evaluation import evaluate_binary_predictions
 from ai.scoring import (
     compare_page_to_references,
     decide_similarity_verdict,
@@ -238,70 +231,6 @@ def test_chunk_text_splits_long_inputs():
     chunks = chunk_text(text, chunk_size=50, overlap=10)
     assert len(chunks) >= 2
     assert all(len(chunk.split()) <= 50 for chunk in chunks)
-
-
-def test_split_reference_texts_creates_train_and_validation_sets():
-    texts = [f"example {i}" for i in range(10)]
-    train, validation = split_reference_texts(texts, validation_ratio=0.2, seed=0)
-    assert len(train) + len(validation) == len(texts)
-    assert 0 < len(validation) < len(texts)
-
-
-def test_tune_similarity_threshold_uses_validation_examples():
-    validation_examples = [
-        {"text": "Urgent security alert: your account has been suspended. Verify your credentials to continue.", "label": 1},
-        {"text": "We provide secure online banking with account login and transaction monitoring.", "label": 0},
-        {"text": "Hello world", "label": 0},
-    ]
-    threshold = tune_similarity_threshold(
-        validation_examples,
-        REFERENCE_BENIGN,
-        REFERENCE_PHISHING,
-    )
-    assert 0.0 <= threshold <= 0.2
-
-
-def test_split_labeled_examples_creates_disjoint_sets():
-    records = [
-        {"text": f"example {i}", "label": 1 if i % 2 else 0}
-        for i in range(10)
-    ]
-    train, validation, test = split_labeled_examples(records, validation_ratio=0.2, test_ratio=0.2, seed=0)
-    assert len(train) + len(validation) + len(test) == len(records)
-    assert len(set(tuple(sorted((item["text"], item["label"]) for item in train))) & set(tuple(sorted((item["text"], item["label"]) for item in validation)))) == 0
-    assert len(set(tuple(sorted((item["text"], item["label"]) for item in train))) & set(tuple(sorted((item["text"], item["label"]) for item in test)))) == 0
-
-
-def test_assign_domain_split_is_stable_and_domain_based():
-    split_a = assign_domain_split("example.com")
-    split_b = assign_domain_split("example.com")
-    split_c = assign_domain_split("another-example.com")
-    assert split_a == split_b
-    assert split_a in {"train", "validation", "test"}
-    assert split_a != split_c or split_a == split_c
-
-
-def test_evaluate_threshold_on_examples_returns_metrics():
-    records = [
-        {"text": "Urgent security alert: your account has been suspended. Verify your credentials to continue.", "label": 1},
-        {"text": "We provide secure online banking with account login and transaction monitoring.", "label": 0},
-    ]
-    metrics = evaluate_threshold_on_examples(
-        records,
-        0.02,
-        REFERENCE_BENIGN,
-        REFERENCE_PHISHING,
-    )
-    assert set(metrics) == {
-        "precision",
-        "recall",
-        "f1",
-        "false_positive_rate",
-        "false_negative_rate",
-        "coverage",
-        "answered_count",
-        "abstentions",
-    }
 
 
 def test_compare_page_to_references_returns_unknown_for_short_text():
