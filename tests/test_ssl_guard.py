@@ -11,7 +11,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 import scanner.security as security
-from scanner.security import check_ssl
+from scanner.security import _issuer_name, check_ssl
 
 
 class Stop(Exception):
@@ -64,3 +64,14 @@ def test_an_empty_answer_is_reported(connections):
     result = check_ssl("example.test", answers())
     assert result == {"valid": False, "error": "Host did not resolve"}
     assert connections == []
+
+
+def test_issuer_name_reads_the_nested_structure_getpeercert_returns():
+    cert = {"issuer": ((("countryName", "US"),), (("organizationName", "Let's Encrypt"),), (("commonName", "R3"),))}
+    assert _issuer_name(cert) == "Let's Encrypt"
+
+
+def test_issuer_name_falls_back_to_the_common_name_then_unknown():
+    assert _issuer_name({"issuer": ((("commonName", "Internal CA"),),)}) == "Internal CA"
+    assert _issuer_name({"issuer": ()}) == "Unknown"
+    assert _issuer_name({}) == "Unknown"

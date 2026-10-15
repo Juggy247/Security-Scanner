@@ -14,6 +14,17 @@ def check_https_final(url: str, response) -> Dict[str, Any]:
         "redirected_to_https": urlparse(url).scheme == "http" and final_scheme == "https"
     }
 
+def _issuer_name(cert: dict) -> str:
+    """The issuer's organisation name, falling back to the common name. getpeercert() returns the issuer as a
+    sequence of relative distinguished names, each a tuple of (key, value) pairs."""
+    fields = {}
+    for rdn in cert.get('issuer', ()):
+        for item in rdn:
+            if isinstance(item, tuple) and len(item) == 2:
+                fields.setdefault(item[0], item[1])
+    return fields.get('organizationName') or fields.get('commonName') or "Unknown"
+
+
 def check_ssl(domain: str, resolver=default_resolver) -> dict:
     try:
         addresses = resolver(domain, 443)
@@ -27,13 +38,7 @@ def check_ssl(domain: str, resolver=default_resolver) -> dict:
         with socket.create_connection((addresses[0], 443), timeout=5) as sock:
             with context.wrap_socket(sock, server_hostname=domain) as ssocks:
                 cert = ssocks.getpeercert()
-                issuer = "Unknown"
-                for item in cert.get('issuer', []):
-                    if isinstance(item, tuple) and len(item) == 2:
-                        key, value = item
-                        if key == 'organizationName':
-                            issuer = value
-                            break
+                issuer = _issuer_name(cert)
 
                 return {
                     "valid": True,
