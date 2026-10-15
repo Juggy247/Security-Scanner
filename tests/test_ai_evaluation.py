@@ -11,20 +11,22 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from dataset_collector import (
+from ai.evaluation import (
+    assign_domain_split,
+    evaluate_binary_predictions,
+    evaluate_threshold_on_examples,
+    split_labeled_examples,
+    split_reference_texts,
+    tune_similarity_threshold,
+)
+from ai.scoring import (
     compare_page_to_references,
     decide_similarity_verdict,
-    chunk_text,
-    split_reference_texts,
-    split_labeled_examples,
-    assign_domain_split,
-    tune_similarity_threshold,
-    evaluate_threshold_on_examples,
-    evaluate_binary_predictions,
+    decide_symmetric_verdict,
     model,
     util,
 )
-from ai.scoring import decide_symmetric_verdict
+from ai.text_processing import chunk_text
 
 
 REFERENCE_BENIGN = [

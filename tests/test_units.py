@@ -568,10 +568,10 @@ class TestDomainInTitle:
 # ============================================================
 
 class TestLanguageDetection:
-    """Tests for dataset_collector.detect_language()."""
+    """Tests for ai.text_processing.detect_language()."""
 
     def test_detects_english_with_enough_text(self):
-        from dataset_collector import detect_language
+        from ai.text_processing import detect_language
 
         text = (
             "This page explains how to secure a website and protect user accounts "
@@ -582,23 +582,23 @@ class TestLanguageDetection:
         assert result == "en"
 
     def test_returns_none_for_short_text(self):
-        from dataset_collector import detect_language
+        from ai.text_processing import detect_language
 
         result = detect_language("Hello world")
         assert result is None
 
     def test_returns_none_when_langdetect_cannot_decide(self):
-        from dataset_collector import detect_language
+        from ai.text_processing import detect_language
 
         result = detect_language("123 456 789 000")
         assert result is None
 
 
 class TestEmbeddingComparison:
-    """Tests for dataset_collector.compare_page_to_references()."""
+    """Tests for ai.scoring.compare_page_to_references()."""
 
     def test_compare_returns_verdict_with_valid_reference_sets(self):
-        from dataset_collector import compare_page_to_references
+        from ai.scoring import compare_page_to_references
 
         result = compare_page_to_references(
             "Your account has been suspended. Verify your identity immediately to restore access.",

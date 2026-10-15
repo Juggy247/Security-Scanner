@@ -8,57 +8,6 @@ from typing import Any, Dict, List, Optional
 
 from mongo_dataset import PageRecordStore
 
-from ai import (
-    DEFAULT_SIMILARITY_THRESHOLD,
-    UNKNOWN_MARGIN,
-    build_record,
-    chunk_text,
-    clean_text,
-    compare_page_to_references,
-    decide_similarity_verdict,
-    detect_language,
-    assign_domain_split,
-    evaluate_binary_predictions,
-    evaluate_threshold_on_examples,
-    extract_page_text,
-    fetch_page,
-    hash_text,
-    load_reference_texts,
-    model,
-    normalize_label_value,
-    score_candidate_page,
-    split_labeled_examples,
-    split_reference_texts,
-    tune_similarity_threshold,
-    util,
-)
-
-__all__ = [
-    "DEFAULT_SIMILARITY_THRESHOLD",
-    "UNKNOWN_MARGIN",
-    "build_record",
-    "chunk_text",
-    "clean_text",
-    "compare_page_to_references",
-    "decide_similarity_verdict",
-    "detect_language",
-    "evaluate_binary_predictions",
-    "evaluate_threshold_on_examples",
-    "extract_page_text",
-    "fetch_page",
-    "hash_text",
-    "load_reference_texts",
-    "main",
-    "model",
-    "normalize_label_value",
-    "score_candidate_page",
-    "split_labeled_examples",
-    "assign_domain_split",
-    "split_reference_texts",
-    "tune_similarity_threshold",
-    "util",
-]
-
 
 REQUIRED_COLUMNS = {"url", "label", "source", "evidence", "listed_at"}
 VALID_LABELS = {"phishing", "benign"}
