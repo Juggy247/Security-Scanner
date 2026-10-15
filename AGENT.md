@@ -49,7 +49,7 @@ time: wait for the owner's output before continuing.
 | `EXPERIMENTS.md` | Log of every experiment, including failures, and the pre-registration |
 | `scanner/ml_advisory.py` | Adapter: `run_ml_advisory(content, status_code, content_type)` scores page bytes the scanner already fetched. Never raises. Imports `ai` lazily |
 | `templates/_ml_card.html` | Advisory card, included from `report.html`. Renders nothing when `ml_analysis` is None. Hardcodes the test numbers (recall 42%, false-positive rate 4%) |
-| `tests/` | `test_ai_evaluation.py` (14), `test_ai_imports.py` (3), `test_score_html.py` (11, no model, no MongoDB), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (live sites, run separately). 126 tests without `test_integration.py` |
+| `tests/` | `test_ai_evaluation.py` (7), `test_ai_metrics.py` (15, pure functions, exact counts), `test_ai_scores.py` (7, fake encoder), `test_ai_imports.py` (3), `test_score_html.py` (11), `test_ml_advisory.py` (10), `test_scanner_ml.py` (9), `test_ml_card.py` (18), `test_units.py` (61), `test_integration.py` (42, live sites). 141 tests without `test_integration.py`, 183 with it. Assertions in the new test files were mutation-checked: a temporary change to the code was tried and the matching test failed (not every test, and the runs are not recorded in git) |
 | `ML/`, `models/`, `DataCollections/`, `train_ml_model.py`, `test_ml_detector.py` | Legacy ML plan. Nothing in `app.py`, `scanner/` or the tests imports it. The two scripts import a missing `scanner.ml_detector` |
 
 ## Data (MongoDB `security_scanner.page_records`, schema version 4)
@@ -106,16 +106,16 @@ Storage: unique index on `url`, partial unique index on `content.text_hash`, `in
 
 ## Known open problems
 
-1. `tests/test_ai_evaluation.py` (as last reviewed): several assertions cannot fail, `predict_mean_similarity` bypasses the
-   pipeline, `predict_threshold` ignores its argument, abstentions are scored as benign in the local harness. Needs a rewrite.
-2. Short-text language detection is unreliable (`langdetect`). A plain English sentence scored 0.86.
-3. `requirements.txt` must list `sentence-transformers`, `numpy`, `huggingface-hub>=1.31.0,<2.0` and `datasets`. Verify in a
+1. Short-text language detection is unreliable (`langdetect`). A plain English sentence scored 0.86.
+2. `requirements.txt` must list `sentence-transformers`, `numpy`, `huggingface-hub>=1.31.0,<2.0` and `datasets`. Verify in a
    fresh virtual environment.
-4. The card hardcodes the measured numbers (42% and 4%). If the threshold or references change, update `_ml_card.html` and
+3. The card hardcodes the measured numbers (42% and 4%). If the threshold or references change, update `_ml_card.html` and
    re-measure on a new split.
-5. The `scanner.test_scanner` harness was removed.
-6. example.com (27 words) is flagged as phishing at margin 0.169, a concrete false positive. A word-count diagnostic on
+4. The `scanner.test_scanner` harness was removed.
+5. example.com (27 words) is flagged as phishing at margin 0.169, a concrete false positive. A word-count diagnostic on
    validation had too few short pages to say whether short pages are worse.
+6. `ai/scoring.py` imports the embedding library at module level, pinned by `tests/test_ai_imports.py`. Making it lazy is
+   optional.
 
 ## Roadmap
 
