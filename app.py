@@ -4,10 +4,9 @@ from scanner.core import SecurityScanner, ScanReport
 import json
 from flasgger import Swagger
 from dotenv import load_dotenv
-from urllib.parse import urlparse
 import os   
-import ipaddress 
 from admin_bp import admin_bp
+from scanner.netguard import is_safe_url
 
 load_dotenv()
 app = Flask(__name__)
@@ -27,35 +26,6 @@ app.config['SWAGGER'] = {
     'specs_route': '/apidocs/'
 }
 swagger = Swagger(app)
-
-def is_safe_url(url:str) -> tuple[bool, str]:
-    "block private ips, localhost, non http schemes"
-    try:
-        parsed = urlparse(url)
-
-        #Only allow http and https
-        if parsed.scheme not in ('http','https'):
-            return False, "Only HTTP and HTTPS URLs are allowed"
-        
-        hostname = parsed.hostname
-        if not hostname:
-            return False, "Invalid URL"
-        
-        #Block localhost
-        if hostname in ('localhost', '127.0.0.1', '::1'):
-            return False, "Scanning Localhost is not allowed"
-        
-        #Block private ip ranges
-        try:
-            ip = ipaddress.ip_address(hostname)
-            if ip.is_private or ip.is_loopback or ip.is_reserved:
-                return False, "Scanning private/Internal ip address is not allowed"
-        except ValueError:
-            pass
-        return True,""
-    
-    except Exception as e:
-        return False,f"Invalid: {str(e)}"
 
 @app.route('/')
 def home():

@@ -1,7 +1,10 @@
 import requests
 
-def session_get() -> requests.Session:  #Type hint "-> requests.Session"
-    session = requests.Session()
+from .netguard import GuardedSession, UnsafeUrlError
+
+
+def session_get() -> requests.Session:
+    session = GuardedSession()
     session.headers.update({
         'User-Agent': 'SecurityScanner/1.0 (Educational)'
     })
@@ -19,6 +22,8 @@ def fetch_url(session, url, timeout=10, allow_redirects = True, verify=False):
                  verify=verify
             )
             return response
+        except UnsafeUrlError:
+            raise   # a blocked target is not an ordinary fetch failure: let the caller report it
         except requests.exceptions.Timeout:
              print(f" Timeout fetching {url}")
              return None

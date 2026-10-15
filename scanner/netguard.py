@@ -93,3 +93,9 @@ class GuardedSession(requests.Session):
         if not allowed:
             raise UnsafeUrlError(f"{reason}: {request.url}")
         return super().send(request, **kwargs)
+
+
+def is_safe_url(url: str, resolver: Resolver = default_resolver) -> Tuple[bool, str]:
+    """(allowed, reason) for callers that only need a yes or no. The reason is empty when the URL is allowed."""
+    allowed, reason = check_public_url(url, resolver)
+    return allowed, ("" if allowed else reason)
