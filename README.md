@@ -59,7 +59,7 @@ An optional, experimental text-similarity signal (off by default) can show an ad
 ### 🛡️ SSRF Protection
 - Blocks scanning of `localhost`, `127.0.0.1`, `::1` and IP addresses given as literals in private, loopback or reserved ranges
 - Only allows `http://` and `https://` schemes
-- Known limit: hostnames that resolve to private addresses, and redirects to them, are not blocked. Do not expose the app to untrusted users without fixing this.
+- Hostnames are resolved and every returned address must be public. Redirect hops are checked before each request. Known limits: DNS rebinding (the check and the connection resolve the name separately), and the SSL certificate check opens its own connection. Run the app where internal services are not reachable.
 
 ### 📊 Verdict System
 Issues are categorized by severity and combined into a final verdict:
@@ -397,10 +397,11 @@ Verdict: SUSPICIOUS
 | `tests/test_units.py` | 61 | nothing external |
 | `tests/test_ai_evaluation.py` | 7 | the MiniLM model (downloads once) |
 | `tests/test_ai_metrics.py`, `test_ai_scores.py`, `test_ai_imports.py` | 15, 7, 3 | nothing external |
+| `tests/test_netguard.py`, `test_netguard_wiring.py` | 64, 10 | nothing external |
 | `tests/test_score_html.py`, `test_ml_advisory.py`, `test_scanner_ml.py`, `test_ml_card.py` | 11, 10, 9, 18 | nothing external (fake encoder) |
 | `tests/test_integration.py` | 42 | live sites and MongoDB, slow |
 
-Run with `pytest tests/ -q --ignore=tests/test_integration.py` (141 tests). The integration tests fetch real websites and were not re-run after the ML change.
+Run with `pytest tests/ -q --ignore=tests/test_integration.py` (215 tests). The integration tests fetch real websites: 42 passed on 2026-10-16 with the guard wired in (ML off, the default).
 
 ---
 
@@ -473,7 +474,6 @@ CC BY 4.0 and intended for anti-phishing research only. No OpenPhish or PhishTan
 ## Future Plans
 
 - Refresh and grow the reference set, and re-measure on a new split (similarity to a fixed set decays as campaigns change)
-- Close the SSRF gap (resolve hostnames, re-check redirects)
 - Make the embedding-library import in `ai.scoring` lazy (the import tests pin the current behavior)
 - Rewrite the weaker assertions in `tests/test_ai_evaluation.py`
 
