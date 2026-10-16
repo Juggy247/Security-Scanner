@@ -174,8 +174,8 @@ Security_Scanner/
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/juggy247/Security_Scanner.git
-cd Security_Scanner
+git clone https://github.com/Juggy247/Security-Scanner.git
+cd Security-Scanner
 ```
 
 **2. Create and activate a virtual environment**
@@ -506,11 +506,7 @@ See `requirements.txt`. Install with `pip install -r requirements.txt`.
 
 ## Disclaimer
 
-<<<<<<< HEAD
-This tool is built for **educational purposes**.
-=======
 This tool is built for **educational purposes**. Always obtain permission before scanning websites you do not own. The scanner respects `robots.txt` by default and includes an optional bypass for research use only. Scanning live malicious sites should be done from an isolated environment, not a personal machine.
->>>>>>> c3bff46 (Update README, AGENT.md and experiment log for the advisory ML signal)
 
 ---
 
