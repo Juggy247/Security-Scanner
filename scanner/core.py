@@ -473,7 +473,7 @@ class SecurityScanner:
         # Check robots.txt (but don't fail if it times out)
         try:
             report.robots_allowed = scan_check(url, self.session)
-        except:
+        except Exception:
             report.robots_allowed = True  # Default to allowed if check fails
         
         if not report.robots_allowed and not self.bypass_robots:
