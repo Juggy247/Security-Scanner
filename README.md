@@ -59,7 +59,11 @@ An optional, experimental text-similarity signal (off by default) can show an ad
 ### 🛡️ SSRF Protection
 - Blocks scanning of `localhost`, `127.0.0.1`, `::1` and IP addresses given as literals in private, loopback or reserved ranges
 - Only allows `http://` and `https://` schemes
-- Hostnames are resolved and every returned address must be public. On macOS the resolver turns `2130706433`, `0x7f.1` and `127.1` into `127.0.0.1`, which the previous string check did not recognise as IP addresses. Each redirect hop is checked before it is requested, and a redirect into a non-public address is reported as a critical finding. The SSL certificate check resolves once, checks the answers and connects to the checked address. The scanner reads at most the first 2 MB of a page, stops reading a body after 30 seconds (plus one read timeout) and follows at most 10 redirects. A page cut off at the cap is reported as a medium finding, because content after that point, such as a form, is not analysed. Known limits: the bodies of redirect responses are not bounded (the HTTP library reads each one in full before following it, verified with requests 2.31.0), and DNS rebinding on the page fetch. This guard does not replace network controls: run the app where internal services are not reachable.
+- Hostnames are resolved and every returned address must be public. On macOS the resolver turns `2130706433`, `0x7f.1` and `127.1` into `127.0.0.1`, which the previous string check did not recognise as IP addresses
+- Each redirect hop is checked before it is requested, and a redirect into a non-public address is reported as a critical finding
+- The SSL certificate check resolves once, checks the answers and connects to the checked address
+- Fetch limits: the scanner reads at most the first 2 MB of a page, stops reading a body after 30 seconds (plus one read timeout) and follows at most 10 redirects. A page cut off at the cap is reported as a medium finding, because content after that point, such as a form, is not analysed
+- Known limits: the bodies of redirect responses are not bounded (the HTTP library reads each one in full before following it, verified with requests 2.31.0), and DNS rebinding on the page fetch. This guard does not replace network controls: run the app where internal services are not reachable
 
 ### 📊 Verdict System
 Issues are categorized by severity and combined into a final verdict:
@@ -118,7 +122,7 @@ Form checks
 ## Project Structure
 
 ```
-Security_Scanner/
+Security-Scanner/
 ├── scanner/                    # Core backend package
 │   ├── __init__.py
 │   ├── core.py                 # SecurityScanner + ScanReport (main orchestrator)
@@ -476,7 +480,6 @@ CC BY 4.0 and intended for anti-phishing research only. No OpenPhish or PhishTan
 
 - Refresh and grow the reference set, and re-measure on a new split (similarity to a fixed set decays as campaigns change)
 - Make the embedding-library import in `ai.scoring` lazy (the import tests pin the current behavior)
-- Rewrite the weaker assertions in `tests/test_ai_evaluation.py`
 
 ---
 
