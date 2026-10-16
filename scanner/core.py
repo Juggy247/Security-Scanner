@@ -60,6 +60,9 @@ class ScanReport:
 
     # Set when the page redirected to an address the network guard refused to fetch.
     blocked_redirect: dict = None
+
+    # True when the page was larger than the scanner reads (2 MB), so later content was not analysed.
+    response_truncated: bool = False
     
     def _check_https_issues(self) -> List[Dict[str, str]]:
         
@@ -302,6 +305,7 @@ class ScanReport:
             self._check_robots_issues,
             self._check_offline_issues,
             self._check_blocked_redirect_issues,
+            self._check_truncated_issues,
         ]
         
         for check_method in check_methods:
@@ -426,6 +430,19 @@ class ScanReport:
             ))
 
         return issues
+
+    def _check_truncated_issues(self) -> List[Dict[str, str]]:
+        issues = []
+
+        if self.response_truncated:
+            issues.append(create_issue(
+                issue_type="Page Larger Than the Scanner Reads",
+                description="The page was cut off after 2 MB or 30 seconds, so later content (such as forms) was not analysed",
+                risk="Oversized pages can hide content from automated checks",
+                severity="medium"
+            ))
+
+        return issues
     
     def to_dict(self) -> dict:
         """Serialize ScanReport to a JSON-safe dictionary"""
@@ -451,6 +468,7 @@ class ScanReport:
             'brand_impersonation': self.brand_impersonation,
             'ml_analysis': self.ml_analysis,
             'blocked_redirect': self.blocked_redirect,
+            'response_truncated': self.response_truncated,
         }
 
 
@@ -499,6 +517,8 @@ class SecurityScanner:
             # Don't fail on non-200 status codes - many malicious sites return errors
             if response.status_code >= 400:
                 print(f"  Warning: HTTP {response.status_code} (continuing scan anyway)")
+
+            report.response_truncated = bool(getattr(response, "truncated", False))
             
             # Parse HTML (may be empty for some malicious sites)
             soup = BeautifulSoup(response.content, 'html.parser')
