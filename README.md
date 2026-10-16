@@ -59,7 +59,7 @@ An optional, experimental text-similarity signal (off by default) can show an ad
 ### 🛡️ SSRF Protection
 - Blocks scanning of `localhost`, `127.0.0.1`, `::1` and IP addresses given as literals in private, loopback or reserved ranges
 - Only allows `http://` and `https://` schemes
-- Hostnames are resolved and every returned address must be public. On macOS the resolver turns `2130706433`, `0x7f.1` and `127.1` into `127.0.0.1`, which the previous string check did not recognise as IP addresses. Each redirect hop is checked before it is requested, and a redirect into a non-public address is reported as a critical finding. The SSL certificate check resolves once, checks the answers and connects to the checked address. Known limits: DNS rebinding on the page fetch (the check and the connection resolve the name separately), and no response size cap or total deadline in the scanner's fetch. This guard does not replace network controls: run the app where internal services are not reachable.
+- Hostnames are resolved and every returned address must be public. On macOS the resolver turns `2130706433`, `0x7f.1` and `127.1` into `127.0.0.1`, which the previous string check did not recognise as IP addresses. Each redirect hop is checked before it is requested, and a redirect into a non-public address is reported as a critical finding. The SSL certificate check resolves once, checks the answers and connects to the checked address. The scanner reads at most the first 2 MB of a page, stops reading a body after 30 seconds (plus one read timeout) and follows at most 10 redirects. A page cut off at the cap is reported as a medium finding, because content after that point, such as a form, is not analysed. Known limits: the bodies of redirect responses are not bounded (the HTTP library reads each one in full before following it, verified with requests 2.31.0), and DNS rebinding on the page fetch. This guard does not replace network controls: run the app where internal services are not reachable.
 
 ### 📊 Verdict System
 Issues are categorized by severity and combined into a final verdict:
@@ -398,10 +398,11 @@ Verdict: SUSPICIOUS
 | `tests/test_ai_evaluation.py` | 7 | the MiniLM model (downloads once) |
 | `tests/test_ai_metrics.py`, `test_ai_scores.py`, `test_ai_imports.py` | 15, 7, 3 | nothing external |
 | `tests/test_netguard.py`, `test_netguard_wiring.py`, `test_scanner_blocked_redirect.py`, `test_ssl_guard.py` | 64, 10, 8, 10 | nothing external |
+| `tests/test_scanner_robots.py`, `test_fetch_limits.py`, `test_scanner_truncated.py` | 4, 8, 5 | nothing external |
 | `tests/test_score_html.py`, `test_ml_advisory.py`, `test_scanner_ml.py`, `test_ml_card.py` | 11, 10, 9, 18 | nothing external (fake encoder) |
 | `tests/test_integration.py` | 42 | live sites and MongoDB, slow |
 
-Run with `pytest tests/ -q --ignore=tests/test_integration.py` (233 tests). The integration tests fetch real websites: 42 passed on 2026-10-16 with the guard wired in (ML off, the default).
+Run with `pytest tests/ -q --ignore=tests/test_integration.py` (250 tests). The integration tests fetch real websites: 42 passed on 2026-10-16 with the guard wired in (ML off, the default).
 
 ---
 
