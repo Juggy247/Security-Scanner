@@ -513,4 +513,10 @@ This tool is built for **educational purposes**. Always obtain permission before
 
 ---
 
+## Contributors
+
+**Main contributors**
+- [Thu Htoo Zaw](https://github.com/THEIR-USERNAME)
+- [Thiri Toe Toe Zin](https://github.com/THEIR-USERNAME)
+  
 *Built with Python 🐍 | [github.com/juggy247](https://github.com/juggy247)*
